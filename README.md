@@ -1,5 +1,6 @@
 # Reporter
-Yet another ptchina bot. 
+
+Yet another ptchina bot.
 
 ## Getting Started
 

@@ -1,4 +1,3 @@
-# This is a sample Python script.
 import configparser
 import hashlib
 import logging
@@ -9,7 +8,7 @@ from random import randrange, randint
 from threading import Thread, Event
 
 import feedparser
-import requests as requests
+import requests
 
 import config
 
@@ -25,9 +24,6 @@ class Article:
     def from_raw(cls, raw: dict) -> 'Article':
         media = [r['url'] for r in raw['media_content'] if r['url'].endswith('.jpg') or r['url'].endswith('.png')]
         return cls(title=raw['title'], link=raw['link'], summary=re.sub(cfg.html_re, '', raw['summary']), media=media)
-
-    def __str__(self) -> str:
-        return f'{self.title} ({self.link})\n{self.summary}\n {self.media}'
 
 
 class History:
