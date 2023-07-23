@@ -10,9 +10,14 @@ import requests
 
 import config
 from provider.gnews import GNewsProvider
+from provider.models import Article
 
 
 class Reporter(Thread):
+    """
+    Reporter is responsible for publishing articles to the imageboard.
+    """
+
     def __init__(self):
         super().__init__()
         self.daemon = True
@@ -27,14 +32,27 @@ class Reporter(Thread):
         self.start()
 
     @staticmethod
-    def fetch_file(article) -> tuple[str, bytes, str]:
+    def fetch_file(article: Article) -> tuple[str, bytes, str]:
+        """
+        Fetches the file from the article and returns a tuple of the filename, file content and the content type
+        :param article: The article to fetch the file from
+        :return: A tuple of the filename, file content and the content type
+        """
         res = requests.get(article.image, hooks={'response': [lambda r, *args, **kwargs: r.raise_for_status()]},
                            headers={'Referer': article.url, 'User-Agent': cfg.user_agent}, )
         tp = res.headers['Content-Type']
         return f'{hashlib.sha256(res.content).hexdigest()}.{tp.split("/")[1]}', res.content, tp
 
     @staticmethod
-    def create_thread(sub='', msg='', files=None):
+    def create_thread(sub: str = "", msg: str = "", files: list[tuple[str, bytes, str]] = None) -> None:
+        """
+        Creates a thread on the imageboard.
+        :param sub: Subject of the thread
+        :param msg: The message of the thread
+        :param files: The files to upload, a list of tuples of the filename, the file content and the content type
+        (see fetch_file)
+        :return: None
+        """
 
         thread_form = (
             ('name', (None, cfg.poster_name)),
@@ -75,7 +93,7 @@ class Reporter(Thread):
             interval = random_interval()
             logging.info(f'Next article scheduled: {datetime.now() + timedelta(seconds=interval)}')
 
-    def stop(self):
+    def stop(self) -> None:
         self.__stp.set()
 
 

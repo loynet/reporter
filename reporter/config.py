@@ -4,6 +4,10 @@ from configparser import ConfigParser
 
 
 class Config:
+    """
+    The config class is used to parse the config file and provide the values to the rest of the program
+    """
+
     def __init__(self, path: str):
         parser = ConfigParser()
         parser.read(path)

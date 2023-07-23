@@ -11,7 +11,12 @@ from .models import Article
 
 
 class GNewsProvider:
-    def __init__(self, url, user_agent=None, max_history_size=10):
+    """
+    A provider for Google News RSS feeds with support for consent page and redirects. It keeps track of the last N
+    articles returned to avoid returning the same articles multiple times.
+    """
+
+    def __init__(self, url: str, user_agent: str = "", max_history_size: int = 10):
         # Ensure that the URL is valid
         if not url.startswith('https://news.google.com/rss/topics/'):
             raise ValueError('URL must be a valid RSS Google News URL')
@@ -21,7 +26,7 @@ class GNewsProvider:
 
         # Create a session, used mainly to avoid the consent page
         self.__session = requests.Session()
-        if user_agent:
+        if user_agent != "":
             self.__session.headers.update({'User-Agent': user_agent})
 
     @staticmethod
@@ -67,7 +72,13 @@ class GNewsProvider:
 
         return BeautifulSoup(res.text, 'html.parser')
 
-    def get_random_article(self, max_tries=3) -> Article:
+    def get_random_article(self, max_tries: int = 3) -> Article:
+        """
+        Get a random article from the feed. It will try at most max_tries times to get an article that has not been
+        returned before.
+        :param max_tries: The maximum number of tries
+        :return: The article
+        """
         articles = feedparser.parse(self.url)['entries']
         for i in range(min(max_tries, len(articles))):
             # Pick a random article
@@ -89,7 +100,12 @@ class GNewsProvider:
 
         raise Exception('Unable to get article')
 
-    def get_article(self, url) -> Article:
+    def get_article(self, url: str) -> Article:
+        """
+        Get an article from the feed. This method will not check if the article has been returned before.
+        :param url: The URL of the article
+        :return: The article
+        """
         if not url.startswith('https://news.google.com/rss/articles/'):
             raise ValueError('URL must be a valid RSS Google News URL')
 
