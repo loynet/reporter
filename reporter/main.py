@@ -9,7 +9,7 @@ from threading import Thread, Event
 import requests
 
 import config
-from newsprov.gnews import GNewsProvider
+from provider.gnews import GNewsProvider
 
 
 class Reporter(Thread):
@@ -35,6 +35,7 @@ class Reporter(Thread):
 
     @staticmethod
     def create_thread(sub='', msg='', files=None):
+        """
         thread_form = (
             ('name', (None, cfg.poster_name)),
             ('subject', (None, sub if len(sub) <= cfg.max_subject_len else sub[:cfg.max_subject_len - 3] + '...')),
@@ -50,6 +51,8 @@ class Reporter(Thread):
             hooks={'response': [lambda r, *args, **kwargs: r.raise_for_status()]},
             files=thread_form
         )
+        """
+        print(f'Creating thread with subject: {sub}')
 
     def run(self) -> None:
         def random_interval():
@@ -78,14 +81,12 @@ class Reporter(Thread):
 if __name__ == '__main__':
     logging.basicConfig(level=logging.INFO, format='[%(asctime)s %(funcName)s] %(message)s (%(name)s)')
 
-    # TODO: undo this mess, fix the imports and add type hints
-    #if len(sys.argv) < 2:
-    #    print(f'Usage: reporter.py <config_file>')
-    #    sys.exit(1)
+    if len(sys.argv) < 2:
+        print(f'Usage: reporter.py <config_file>')
+        sys.exit(1)
 
     try:
-        #cfg = config.Config(sys.argv[1])
-        cfg = config.Config('./config.ini')
+        cfg = config.Config(sys.argv[1])
     except configparser.Error as e:
         logging.error(f'Exception while parsing config file, exiting: {e}')
         sys.exit(1)

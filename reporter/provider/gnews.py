@@ -6,8 +6,8 @@ from bs4 import BeautifulSoup
 import feedparser
 import logging
 
-from newsprov.models import OGArticle
-from newsprov.commons import History
+from .commons import History
+from .models import OGArticle
 
 
 class GNewsProvider:
