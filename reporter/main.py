@@ -16,7 +16,7 @@ class Reporter(Thread):
     def __init__(self):
         super().__init__()
         self.daemon = True
-        self._stop = Event()
+        self.__stp = Event()
 
         self.provider = GNewsProvider(
             cfg.feed_url,
@@ -35,7 +35,7 @@ class Reporter(Thread):
 
     @staticmethod
     def create_thread(sub='', msg='', files=None):
-        """
+
         thread_form = (
             ('name', (None, cfg.poster_name)),
             ('subject', (None, sub if len(sub) <= cfg.max_subject_len else sub[:cfg.max_subject_len - 3] + '...')),
@@ -45,14 +45,14 @@ class Reporter(Thread):
         for file in files[:cfg.max_files]:
             thread_form = (*thread_form, ('file', file))
 
-        requests.post(
+        res = requests.post(
             url=f'{cfg.ib_url}/forms/board/{cfg.ib_board}/post',
             headers={'Referer': f'{cfg.ib_url}/{cfg.ib_board}/index.html', 'User-Agent': cfg.user_agent},
             hooks={'response': [lambda r, *args, **kwargs: r.raise_for_status()]},
             files=thread_form
         )
-        """
-        print(f'Creating thread with subject: {sub}')
+        if res != 200:
+            raise Exception(f'Failed to create thread: {res}')
 
     def run(self) -> None:
         def random_interval():
@@ -60,22 +60,23 @@ class Reporter(Thread):
 
         interval = random_interval()
         logging.info(f'First article scheduled: {datetime.now() + timedelta(seconds=interval)}')
-        while not self._stop.wait(interval):
+        while not self.__stp.wait(interval):
             try:
                 # Get a new article
                 a = self.provider.get_random_article()
                 # Create a new thread
                 self.create_thread(sub=a.title, msg=f'>{a.description}\n\n{a.url}', files=[self.fetch_file(a)])
-                # Schedule the next article
-                interval = random_interval()
             except Exception as e:
                 logging.error(f'Exception while publishing, skipping article: {e}')
                 pass
 
+            logging.info("Successfully published article")
+            # Schedule the next article
+            interval = random_interval()
             logging.info(f'Next article scheduled: {datetime.now() + timedelta(seconds=interval)}')
 
     def stop(self):
-        self._stop.set()
+        self.__stp.set()
 
 
 if __name__ == '__main__':

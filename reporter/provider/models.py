@@ -1,7 +1,7 @@
 from bs4 import BeautifulSoup
 
 
-class OGArticle:
+class Article:
     def __init__(self, title: str, url: str, description: str, image: str):
         self.title: str = title
         self.url: str = url
@@ -12,7 +12,7 @@ class OGArticle:
         return f'TITLE={self.title}\nURL={self.url})\nDESCRIPTION={self.description}\nIMAGE_URL={self.image}'
 
     @classmethod
-    def from_html(cls, r: str) -> 'OGArticle':
+    def from_html(cls, r: str) -> 'Article':
         """
         Create an Article from an HTML string, the HTML must contain the Open Graph meta tags-
         :param r: The HTML string

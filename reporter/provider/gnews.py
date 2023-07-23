@@ -7,7 +7,7 @@ import feedparser
 import logging
 
 from .commons import History
-from .models import OGArticle
+from .models import Article
 
 
 class GNewsProvider:
@@ -20,7 +20,6 @@ class GNewsProvider:
         self.history = History(max_history_size)
 
         # Create a session, used mainly to avoid the consent page
-        # TODO maybe this should be also used for the RSS feed
         self.__session = requests.Session()
         if user_agent:
             self.__session.headers.update({'User-Agent': user_agent})
@@ -68,29 +67,29 @@ class GNewsProvider:
 
         return BeautifulSoup(res.text, 'html.parser')
 
-    def get_random_article(self, max_tries=3) -> OGArticle:
+    def get_random_article(self, max_tries=3) -> Article:
         articles = feedparser.parse(self.url)['entries']
         for i in range(min(max_tries, len(articles))):
             # Pick a random article
             logging.info(f'Trying to pick random article {i + 1}/{max_tries}')
             try:
-                article = self.get_article(articles[randrange(len(articles))]['link'])
-                # TODO there's an opportunity for optimization here, we could check if the article is
-                #  in the history before getting it
-                if self.history.has(article.title):
+                # We use the url as a unique identifier for the article, which is probably better than using the title
+                url = articles[randrange(len(articles))]['link']
+                if self.history.has(url):  # Filter duplicates
                     logging.info('Article already seen, trying again')
                     continue
+                article = self.get_article(url)
             except Exception as e:
                 logging.info(f'Failed to get article: {e}')
                 time.sleep(3)
                 continue
 
-            self.history.add(article.title)
+            self.history.add(article.url)
             return article
 
         raise Exception('Unable to get article')
 
-    def get_article(self, url) -> OGArticle:
+    def get_article(self, url) -> Article:
         if not url.startswith('https://news.google.com/rss/articles/'):
             raise ValueError('URL must be a valid RSS Google News URL')
 
@@ -107,4 +106,4 @@ class GNewsProvider:
             logging.info('Redirect page found, following redirect manually')
             soup = self.__handle_redirect(soup)
 
-        return OGArticle.from_html(str(soup))
+        return Article.from_html(str(soup))
